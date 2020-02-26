@@ -1,24 +1,41 @@
+# The services will be a WordPress website, phpMyAdmin and MySQL. 
+# You will need to make sure your SQL database works with the WordPress and phpMyAdmin.
+# Your server should be able to use the SSL protocol
+
+# You will also need to make sure your server is running with an autoindex that must
+# be able to be disabled
+
 FROM debian:buster
 
 MAINTAINER Henry Buisseret <hbuisser@student.s19.be>
 
 RUN apt-get update -yq \
 && apt-get install sudo -yq \
+&& apt-get install curl -yq \
+&& apt-get install wget -yq \
 && apt-get clean -y 
-
-# run html
-
-RUN rm /var/www/html/index.nginx-debian.html
-COPY ./srcs/index.html .
-RUN mv index.html /var/www/html
-
-# Setting up a LEMP stack (Linux, Nginx, MariaDB, and PHP) 
 
 # install nginx
 RUN apt-get install nginx -yq
 
+# run html
+COPY /srcs/nginx.conf /etc/nginx/sites-available
+RUN rm /var/www/html/index.nginx-debian.html
+COPY ./srcs/index.html .
+RUN mv index.html /var/www/html
+RUN ln -s /etc/nginx/sites-available/nginx.conf /etc/nginx/sites-enabled/
+
+# ------- Setting up a LEMP stack (Linux, Nginx, MariaDB, and PHP) ----------
+
 # install mariadb / système de gestion de base de données. Il s'agit d'un fork communautaire de MySQL
 RUN apt-get install mariadb-server -yq
+RUN apt-get install mariadb-client -yq
+
+# install SSL
+ 
+RUN wget https://github.com/FiloSottile/mkcert/releases/download/v1.1.2/mkcert-v1.1.2-linux-amd64 \
+&& mv mkcert-v1.1.2-linux-amd64 mkcert \
+&& chmod +x /mkcert && /mkcert -install && /mkcert localhost.com
 
 # install php
 RUN sudo apt install apache2 php7.3 libapache2-mod-php7.3 php7.3-common php7.3-mbstring php7.3-xmlrpc php7.3-soap php7.3-gd php7.3-xml php7.3-intl php7.3-mysql php7.3-cli php7.3-ldap php7.3-zip php7.3-curl -yq \
@@ -26,11 +43,11 @@ RUN sudo apt install apache2 php7.3 libapache2-mod-php7.3 php7.3-common php7.3-m
 
 # install Wordpress
 
+
+
 # install phpmyadmin
 #RUN
 
-# install SSL
-#RUN 
 
 
 
