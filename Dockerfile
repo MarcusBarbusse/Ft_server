@@ -24,11 +24,6 @@ RUN apt-get install nginx -y
 # install mariadb / système de gestion de base de données. Il s'agit d'un fork communautaire de MySQL
 RUN apt-get install mariadb-server mariadb-client -yq
 
-# install SSL
-ADD https://github.com/FiloSottile/mkcert/releases/download/v1.1.2/mkcert-v1.1.2-linux-amd64 ./
-RUN mv mkcert-v1.1.2-linux-amd64 mkcert \
-	&& chmod +x /mkcert && /mkcert -install && /mkcert localhost.com
-
 # install php
 RUN apt-get install php -yq \
 && apt-get install php-mysql -yq \
@@ -43,9 +38,14 @@ RUN	tar -zxzf phpMyAdmin-5.0.1-all-languages.tar.gz \
 	&& mkdir /var/www/html/phpMyAdmin/tmp \
 	&& chmod 777 /var/www/html/phpMyAdmin/tmp
 
+# install SSL
+ADD https://github.com/FiloSottile/mkcert/releases/download/v1.1.2/mkcert-v1.1.2-linux-amd64 ./
+RUN mv mkcert-v1.1.2-linux-amd64 mkcert \
+	&& chmod +x /mkcert && /mkcert -install && /mkcert localhost.com
+
 # install Wordpress
 RUN cd /tmp \
-&& curl -LO https://wordpress.org/latest.tar.gz \
+&& curl -O https://wordpress.org/latest.tar.gz \
 && tar xzvf latest.tar.gz \
 && cp /tmp/wordpress/wp-config-sample.php /tmp/wordpress/wp-config.php \
 && mkdir /var/www/html/wordpress \
@@ -53,27 +53,30 @@ RUN cd /tmp \
 && sudo chown -R www-data:www-data /var/www/
 COPY srcs/wp-config.php /var/www/html/wordpress
 
-#service start
-RUN service nginx start
-RUN service php7.3-fpm start
-RUN service mysql start
+
+
+# Config nginx
+ADD /srcs/nginx.conf /etc/nginx/sites-available/
+ADD /srcs/nginx.conf /etc/nginx/sites-enabled/
 
 # run html
-COPY /srcs/nginx.conf /etc/nginx/sites-available
-RUN rm /var/www/html/index.nginx-debian.html
-COPY ./srcs/index.html .
-RUN mv index.html /var/www/html
-RUN ln -s /etc/nginx/sites-available/nginx.conf /etc/nginx/sites-enabled/
+RUN rm var/www/html/index.html \
+	&& rm var/www/html/index.nginx-debian.html
+ADD /srcs/index.html /var/www/html/
+
+# Config mariadb
+ADD /srcs/mysql_db_config.sh ./
+
+#service start
+RUN service nginx start \
+&& service php7.3-fpm start \
+&& service mysql start
 
 # L'instruction EXPOSE permet d'indiquer le port sur lequel votre application écoute
 # 443 c'est le https
 EXPOSE 80 443
 
-# start service
-RUN service nginx restart
-
 # placer en dernière ligne pour plus de compréhension
 # permet à notre conteneur de savoir quelle commande il doit exécuter lors de son démarrage
-CMD nginx -g "daemon off;"
-
-
+#CMD nginx -g "daemon off;"
+CMD /bin/bash ./mysql_db_config.sh && sleep infinity & wait
