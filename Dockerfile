@@ -1,16 +1,8 @@
-# The services will be a WordPress website, phpMyAdmin and MySQL. 
-# You will need to make sure your SQL database works with the WordPress and phpMyAdmin.
-# Your server should be able to use the SSL protocol
-
-# You will also need to make sure your server is running with an autoindex that must
-# be able to be disabled
-
 FROM debian:buster
 
 MAINTAINER Henry Buisseret <hbuisser@student.s19.be>
 
 RUN apt-get update -y \
-&& apt update -y \
 && apt-get install sudo -y \
 && apt-get install curl -y \
 && apt-get install wget -y \
@@ -21,8 +13,9 @@ RUN apt-get update -y \
 # install nginx
 RUN apt-get install nginx -y
 
-# install mariadb / système de gestion de base de données. Il s'agit d'un fork communautaire de MySQL
-RUN apt-get install mariadb-server mariadb-client -yq
+# install mariadb 
+# système de gestion de base de données. Il s'agit d'un fork communautaire de MySQL
+RUN apt-get install mariadb-server -yq
 
 # install php
 RUN apt-get install php -yq \
@@ -31,23 +24,25 @@ RUN apt-get install php -yq \
 && apt install php-json php-mbstring -y
 
 # install phpmyadmin
-# phpMyAdmin est une application Web de gestion pour les systèmes de gestion de base de données MySQL 
-ADD https://files.phpmyadmin.net/phpMyAdmin/5.0.1/phpMyAdmin-5.0.1-all-languages.tar.gz ./
+# application Web de gestion pour les systèmes de gestion de base de données MySQL 
+RUN wget https://files.phpmyadmin.net/phpMyAdmin/5.0.1/phpMyAdmin-5.0.1-all-languages.tar.gz 
 RUN	tar -zxzf phpMyAdmin-5.0.1-all-languages.tar.gz \
-	&& mv phpMyAdmin-5.0.1-all-languages /var/www/html/phpMyAdmin \
-	&& rm phpMyAdmin-5.0.1-all-languages.tar.gz \
-	&& mkdir /var/www/html/phpMyAdmin/tmp \
-	&& chmod 777 /var/www/html/phpMyAdmin/tmp
+&& mv phpMyAdmin-5.0.1-all-languages /var/www/html/phpMyAdmin \
+&& rm phpMyAdmin-5.0.1-all-languages.tar.gz \
+&& mkdir /var/www/html/phpMyAdmin/tmp \
+&& chmod 777 /var/www/html/phpMyAdmin/tmp
+
+# -------- Others --------
 
 # phpMyAdmin blowfish secret generator change
 ADD /srcs/config.inc.php /var/www/html/phpMyAdmin
 RUN rm /var/www/html/phpMyAdmin/config.sample.inc.php 
 
-
 # install SSL
-ADD https://github.com/FiloSottile/mkcert/releases/download/v1.1.2/mkcert-v1.1.2-linux-amd64 ./
+# protocoles de sécurisation des échanges
+RUN wget https://github.com/FiloSottile/mkcert/releases/download/v1.1.2/mkcert-v1.1.2-linux-amd64
 RUN mv mkcert-v1.1.2-linux-amd64 mkcert \
-	&& chmod +x /mkcert && /mkcert -install && /mkcert localhost.com
+&& chmod 777 /mkcert && /mkcert -install && /mkcert localhost.com
 
 # install Wordpress
 RUN cd /tmp \
@@ -63,9 +58,9 @@ COPY srcs/wp-config.php /var/www/html/wordpress
 ADD /srcs/nginx.conf /etc/nginx/sites-available/
 ADD /srcs/nginx.conf /etc/nginx/sites-enabled/
 
-# run html
+# change the default html
 RUN rm var/www/html/index.html \
-	&& rm var/www/html/index.nginx-debian.html
+&& rm var/www/html/index.nginx-debian.html
 ADD /srcs/index.html /var/www/html/
 
 # Config mariadb
@@ -77,7 +72,7 @@ RUN service nginx start \
 && service mysql start
 
 # L'instruction EXPOSE permet d'indiquer le port sur lequel votre application écoute
-# 443 c'est le https
+# 443 est le port https
 EXPOSE 80 443
 
 # placer en dernière ligne pour plus de compréhension
