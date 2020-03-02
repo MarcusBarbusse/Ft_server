@@ -31,12 +31,18 @@ RUN apt-get install php -yq \
 && apt install php-json php-mbstring -y
 
 # install phpmyadmin
+# phpMyAdmin est une application Web de gestion pour les systèmes de gestion de base de données MySQL 
 ADD https://files.phpmyadmin.net/phpMyAdmin/5.0.1/phpMyAdmin-5.0.1-all-languages.tar.gz ./
 RUN	tar -zxzf phpMyAdmin-5.0.1-all-languages.tar.gz \
 	&& mv phpMyAdmin-5.0.1-all-languages /var/www/html/phpMyAdmin \
 	&& rm phpMyAdmin-5.0.1-all-languages.tar.gz \
 	&& mkdir /var/www/html/phpMyAdmin/tmp \
 	&& chmod 777 /var/www/html/phpMyAdmin/tmp
+
+# phpMyAdmin blowfish secret generator change
+ADD /srcs/config.inc.php /var/www/html/phpMyAdmin
+RUN rm /var/www/html/phpMyAdmin/config.sample.inc.php 
+
 
 # install SSL
 ADD https://github.com/FiloSottile/mkcert/releases/download/v1.1.2/mkcert-v1.1.2-linux-amd64 ./
@@ -52,8 +58,6 @@ RUN cd /tmp \
 && sudo cp -a /tmp/wordpress/. /var/www/html/wordpress \
 && sudo chown -R www-data:www-data /var/www/
 COPY srcs/wp-config.php /var/www/html/wordpress
-
-
 
 # Config nginx
 ADD /srcs/nginx.conf /etc/nginx/sites-available/
