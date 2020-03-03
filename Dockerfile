@@ -11,6 +11,7 @@ RUN apt-get update -y \
 # ------- Setting up a LEMP stack (Linux, Nginx, MariaDB, and PHP) ----------
 
 # install nginx
+# NGINX est un logiciel libre de serveur Web
 RUN apt-get install nginx -y
 
 # install mariadb 
@@ -24,7 +25,7 @@ RUN apt-get install php -yq \
 && apt install php-json php-mbstring -y
 
 # install phpmyadmin
-# application Web de gestion pour les systèmes de gestion de base de données MySQL 
+# application Web pour les systèmes de gestion de base de données MySQL 
 RUN wget https://files.phpmyadmin.net/phpMyAdmin/5.0.1/phpMyAdmin-5.0.1-all-languages.tar.gz 
 RUN	tar -zxzf phpMyAdmin-5.0.1-all-languages.tar.gz \
 && mv phpMyAdmin-5.0.1-all-languages /var/www/html/phpMyAdmin \
@@ -48,7 +49,6 @@ RUN mv mkcert-v1.1.2-linux-amd64 mkcert \
 RUN cd /tmp \
 && curl -O https://wordpress.org/latest.tar.gz \
 && tar xzvf latest.tar.gz \
-&& cp /tmp/wordpress/wp-config-sample.php /tmp/wordpress/wp-config.php \
 && mkdir /var/www/html/wordpress \
 && sudo cp -a /tmp/wordpress/. /var/www/html/wordpress \
 && sudo chown -R www-data:www-data /var/www/
